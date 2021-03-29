@@ -6,30 +6,31 @@
 //
 
 // get selected Drafts text
-const selected_text = editor.getSelectedText();
+const selected_text = editor.getSelectedText()
 
 function convertHeader(match, groupA, groupB) {
-    const hl = groupA.length;
-    let hn = '**';
+    const hl = groupA.length
+    let hn = '**'
     
     if (hl === 1) {
-        hn = '======';
+        hn = '======'
     } else if (hl === 2) {
-        hn = '=====';
+        hn = '====='
     } else if (hl === 3) {
-        hn = '====';
+        hn = '===='
     } else if (hl === 4) {
-        hn = '===';
+        hn = '==='
     } else {
-        hn = '**';
+        hn = '**'
     }
     
-    return hn + ' ' + groupB + ' ' + hn;
+    return hn + ' ' + groupB + ' ' + hn
 }
 
 function convertLinks(a, b, c) {
-    const dokuLink = "[[" + c + "|" + b + "]]";
-    return dokuLink;
+    // a is the whole match, b and c are match groups
+    const dokuLink = "[[" + c + "|" + b + "]]"
+    return dokuLink
 }
 
 function convertNestLists(a) {
@@ -50,36 +51,38 @@ function convertNestLists(a) {
     return ' '.repeat(dokuSpaces) + listDel
 }
 
+function convertCodeBlock(a, b) {
+    return "<code>" + b + "</code>"
+}
+
 
 // convert beginning of italics
-let nt = selected_text.replace(/\b_/g, '//');
+let nt = selected_text.replace(/\b_/g, '//')
 // convert end of italics
-nt = nt.replace(/_\b/g, '//');
-// convert beginning of code block
-nt = nt.replace(/`{3}\b/g, "<code>");
-// convert beginning of code block
-nt = nt.replace(/\b`{3}/g, "</code>");
-// convert beginning of in-line code
-nt = nt.replace(/`{1}\b/g, "''");
-// convert end of in-line code
-nt = nt.replace(/\b`{1}/g, "'' ");
+nt = nt.replace(/_\b/g, '//')
+// convert ``` code blocks
+nt = nt.replace(/\`{3}([^\`{3}]+)\`{3}/gm, convertCodeBlock)
+// convert in-line code
+// NOTE: needs to come after code blocks as Apple doesn't support lookbehind
+//     regex. (?<!\`)\`{1}?(?!\`) would be the ideal regex
+nt = nt.replace(/\`{1}?(?!\`)/g, "''")
 // convert headers
-nt = nt.replace(/(#+) (.+)/g, convertHeader);
+nt = nt.replace(/(#+) (.+)/g, convertHeader)
 // convert links
-nt = nt.replace(/\[(.*)\]\((.*)\)/g, convertLinks);
+nt = nt.replace(/\[(.*)\]\((.*)\)/g, convertLinks)
 // convert nested ordered list items
 // NOTE: this needs to come before top-level, otherwise this will also grab the
-// top-level items.
-// NOTE: i use - in MD instaled of numbers (1.). see the readme for reasons.
+//    top-level items.
+// NOTE: i use - in MD instead of numbers (1.). see the readme for reasons.
 nt = nt.replace(/^\s+- /gm, convertNestLists)
 // convert top-level ordered list items
 nt = nt.replace(/^- /gm, '  - ')
 // convert nested unordered list items
 // NOTE: this needs to come before top-level, otherwise this will also grab the
-// top-level items.
+//    top-level items.
 nt = nt.replace(/^\s+\* /gm, convertNestLists)
 // convert top-level unordered list items
 nt = nt.replace(/^\* /gm, '  * ')
 // TODO: add numeric ordered list conversion
 
-app.setClipboard(nt);
+app.setClipboard(nt)
